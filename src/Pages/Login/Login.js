@@ -1,24 +1,29 @@
 import React, { useContext, useState } from 'react';
-import { useForm } from "react-hook-form"
+import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthProvider';
-
-
+import { toast } from 'react-toastify';
+import useToken from '../../hooks/useToken';
 
 const Login = () => {
 
-    const { register,
-        handleSubmit,
-        formState: { errors }
-    } = useForm();
-
+    const { register,handleSubmit,formState: { errors }} = useForm();
     const [loginError, setLoginError] = useState();
+    const [loginUserEmail, setLoginUserEmail] = useState('');
+    const [token] = useToken(loginUserEmail);
     const location = useLocation();
     const navigate = useNavigate();
 
     const from = location.state?.from?.pathname || '/';
 
-    const {signIn} = useContext(AuthContext);
+    const {signIn,signUpWithGoogle} = useContext(AuthContext);
+  
+    if (token) {
+        navigate(from, {replace:true});
+    }
+  
+
+    
 
     const onSubmit = (data) => {
         console.log(data);
@@ -28,7 +33,8 @@ const Login = () => {
         signIn(data.email,data.password)
         .then(result =>{
             const user = result.user;
-            navigate(from,{replace:true})
+            toast.success("Login Successful")
+            setLoginUserEmail(data.email);
             console.log(user);
         })
         .catch(error =>{
@@ -36,6 +42,10 @@ const Login = () => {
             setLoginError(error.message);
         });
     };
+
+    const signUpGoogle = () =>{
+        signUpWithGoogle();
+    }
     return (
 
         <div className='flex flex-col items-center justify-center h-[100vh]'>
@@ -81,11 +91,8 @@ const Login = () => {
 
 
                 </form>
-                <button className='btn btn-outline w-full'>Continue With Google</button>
+                <button onClick={signUpGoogle} className='btn btn-outline w-full'>Continue With Google</button>
             </div>
-
-
-
         </div>
     );
 };

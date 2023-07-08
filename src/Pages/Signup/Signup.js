@@ -1,16 +1,29 @@
 import React, { useContext, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthProvider';
-import { toast } from 'react-hot-toast';
+import { signInWithPopup } from 'firebase/auth';
+import { toast } from 'react-toastify';
+import useToken from '../../hooks/useToken';
+
+
 
 const Signup = () => {
 
     const { register, handleSubmit, formState: { errors } } = useForm();
+    const [createdUserEmail, setCreatedUserEmail] = useState('');
+    const [token] = useToken(createdUserEmail);
+    const navigate = useNavigate();
+
+    if(token){
+        navigate('/');
+    }
+  
 
     const [signupError, setSignupError] = useState();
+   
 
-    const { createUser, update } = useContext(AuthContext);
+    const { createUser,signUpWithGoogle,updateUser } = useContext(AuthContext);
 
     const handleSignup = data => {
         console.log(data);
@@ -24,17 +37,45 @@ const Signup = () => {
                     displayName: data.name
                 }
                 const user = result.user;
-                toast('User Created Successfully')
+               toast('User Created successfully');
                 console.log(user);
-                update(userInfo)
-                    .then(() => { })
-                    .catch()
+                updateUser(userInfo)
+                    .then(() => {
+                      saveUser(data.name,data.email)
+                     })
+                    .catch(err => console.log(err))
             })
             .catch(error => {
                 console.error(error.message);
                 setSignupError(error.message);
             });
     };
+
+    const signUpgoogle = () =>{
+        signUpWithGoogle();
+    }
+
+
+    const saveUser = (name,email) =>{
+        const user = {name,email};
+        fetch('http://localhost:5000/users',{
+            method:'POST',
+            headers:{
+                'content-type':'application/json'
+            },
+           body: JSON.stringify(user)
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            setCreatedUserEmail(email);
+            console.log(data);
+
+        });    
+    }
+
+  
+
 
 
     return (
@@ -92,9 +133,8 @@ const Signup = () => {
                         <div className="divider">OR</div>
                     </div>
 
-
                 </form>
-                <button className='btn btn-outline w-full'>Continue With Google</button>
+                <button onClick={signUpgoogle} className='btn btn-outline w-full'>Continue With Google</button>
             </div>
         </div>
     );

@@ -1,19 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import AppointmentOption from './AppointmentOption';
 import BookingModal from '../../BookingModal/BookingModal';
+import { useQuery } from 'react-query';
+import { format } from 'date-fns';
+import Loading from '../../../Shared/Loading/Loading';
 
 const AppointmentOptions = ({selectDate}) => {
 
-    const [appointmentOption, setAppointmentOption] = useState([]);
+    // const [appointmentOption, setAppointmentOption] = useState([]);
 
     const [treatment, setTreatment] = useState(null);
+    const date = format(selectDate,'PP');
 
-    useEffect(() => {
-        fetch('appointmentOptions.json')
-            .then(res => res.json())
-            .then(data => setAppointmentOption(data))
+    // const {data:appointmentOption=[]} = useQuery({
+    //     queryKey:['appointmentOptions'],
+    //     queryFn: ()=> fetch('http://localhost:5000/appointmentOptions')
+    //     .then(res =>res.json())
+    // })
 
-    }, [])
+    const {data : appointmentOption=[],	refetch,isLoading} = useQuery({
+        queryKey:('appointOptions', date),
+        queryFn: async()=>{
+            const res = await fetch(`http://localhost:5000/appointmentOptions?date=${date}`)
+            const data = await res.json();
+            return data;
+        }
+
+})
+
+    // useEffect(() => {
+    //     fetch('http://localhost:5000/appointmentOptions')
+    //         .then(res => res.json())
+    //         .then(data => setAppointmentOption(data))
+
+    // }, [])
+
+    if(isLoading){
+        return <Loading></Loading>
+    }
 
 
     return (
@@ -32,6 +56,7 @@ const AppointmentOptions = ({selectDate}) => {
             treatment = {treatment}
             setTreatment={setTreatment}
             selectDate={selectDate}
+            refetch ={refetch}
 
             ></BookingModal>
           }

@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { format } from 'date-fns';
+import { AuthContext } from '../../../context/AuthProvider';
+import { toast } from 'react-toastify';
 
-const BookingModal = ({ treatment,setTreatment, selectDate }) => {
+const BookingModal = ({ treatment,setTreatment, selectDate,refetch }) => {
 
     const date = format(selectDate, 'PP');
 
@@ -18,18 +20,47 @@ const BookingModal = ({ treatment,setTreatment, selectDate }) => {
         const email = form.email.value;
 
         const formData ={
+            appointmentDate:date,
             treatmentName,
-            selectedDate: slot,
+            selectedTime: slot,
             patientName,
             phone,
             email
-
         }
-        // console.log(treatmentName,slot,patientName,phone,email);
+        
+
+        fetch('http://localhost:5000/bookings',
+            {
+                method:'POST',
+                
+                headers: {
+                    'content-type':'application/json'
+                },
+                body: JSON.stringify(formData)
+
+            })
+            .then(res =>res.json())
+            .then(data =>{
+               if(data.acknowledged){
+                console.log(data)
+                toast.success('Booking Confirm')
+                setTreatment(null);
+                refetch();
+               }
+               else{
+                toast.error(data.message);
+               }
+                
+            })
+
         console.log(formData);
-        setTreatment(null)
+       
 
     }
+
+    const {user} = useContext(AuthContext);
+
+   
     return (
         <>
 
@@ -47,9 +78,9 @@ const BookingModal = ({ treatment,setTreatment, selectDate }) => {
                             value={slot}>{slot}</option>)
                            }
                         </select>
-                        <input name="name" type="text" placeholder="Full Name" className="input input-bordered w-full max-w-sm my-3" />
+                        <input name="name" type="text" defaultValue={user?.displayName} placeholder="Full Name" className="input input-bordered w-full max-w-sm my-3" />
                         <input name="phone" type="text" placeholder="Phone Number" className="input input-bordered w-full max-w-sm" />
-                        <input name="email" type="text" placeholder="Email" className="input input-bordered w-full max-w-sm my-3" />
+                        <input name="email" type="text" defaultValue={user?.email} placeholder="Email" className="input input-bordered w-full max-w-sm my-3" />
                         <input type="submit" value="Submit" className='btn bg-accent w-full max-w-sm' />
                     </form>
                 </label>
